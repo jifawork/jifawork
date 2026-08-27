@@ -68,6 +68,7 @@ window.JW = {
     { name: 'Fireship',         handle: '@Fireship',        id: 'UCsBjURrPoezykLs9EqxnO1Q' },
   ],
 
-  /* ---- CORS 代理（RSS 跨域抓取用，可替换）---- */
-  proxy: 'https://api.allorigins.win/raw?url=',
+  /* ---- RSS 代理（同源 Pages Function：/api/rss，见 functions/api/rss.js）----
+   * 站内服务端抓取，无跨域限制；第三方公共代理不稳定，已弃用。 */
+  proxy: '/api/rss?url=',
 };
