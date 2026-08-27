@@ -261,7 +261,7 @@
         let id = ch.id;
         if (!id) {
           const html = await fetchText('https://www.youtube.com/' + (ch.handle || ''));
-          const m = html.match(/"channelId":"(UC[\w-]{20,})"/);
+          const m = html.match(/"(?:browseId|channelId|externalId)":"(UC[\w-]{20,})"/) || html.match(/channel\/(UC[\w-]{20,})/);
           id = m ? m[1] : '';
         }
         if (!id) return renderYTCard(ch, []);

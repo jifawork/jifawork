@@ -61,7 +61,7 @@ window.JW = {
   /* ---- 关注的 YouTube 博主 ----
    * id: 频道 ID（以 UC 开头）。留空则按 handle 自动解析。 */
   youtubers: [
-    { name: '小岛大浪吹',       handle: '@xiaodaodalang',   id: '' },
+    { name: '小岛大浪吹',       handle: '@xiaodaodalang',   id: 'UCYPT3wl0MgbOz63ho166KOw' },
     { name: 'MKBHD',            handle: '@mkbhd',           id: 'UCBJycsmduvYEL83R_U4JriQ' },
     { name: 'Linus Tech Tips',  handle: '@LinusTechTips',   id: 'UCXuqSBlHAE6Xw-yeJA0Tunw' },
     { name: '影视飓风',         handle: '@mediastorm6801',  id: 'UC2cRwTuSWxxEtrRnT4lrlQA' },
