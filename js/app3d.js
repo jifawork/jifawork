@@ -210,14 +210,14 @@ function onPointerMove(e) {
 function onClick() {
   if (!hovered) return;
   selectedId = hovered.id;
-  markers.forEach((m, id) => colorMarker(m.userData.dev, id === selectedId));
+  markers.forEach((m, id) => colorMarker(m.dev, id === selectedId));
   if (window.JW_SELECT) window.JW_SELECT(selectedId);
 }
 
 /* ---------- 对外接口 ---------- */
 function select(id) {
   selectedId = id;
-  markers.forEach((m, key) => colorMarker(m.userData.dev, key === id));
+  markers.forEach((m, key) => colorMarker(m.dev, key === id));
 }
 
 function sync() {

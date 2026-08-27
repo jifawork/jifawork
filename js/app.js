@@ -66,7 +66,7 @@
     selected = id;
     renderDeviceList();
     renderDeviceDetail(id);
-    if (window.JW3D && window.JW3D.select) window.JW3D.select(id);
+    try { if (window.JW3D && window.JW3D.select) window.JW3D.select(id); } catch (e) { console.warn('3D select 失败:', e); }
   }
   window.JW_SELECT = (id) => selectDevice(id); // 3D 点击回调
 
