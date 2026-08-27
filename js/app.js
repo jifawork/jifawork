@@ -169,7 +169,50 @@
     return base + ' ' + t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function stripHtml(s) { return (s || '').replace(/<[^>]*>/g, '').slice(0, 80); }
+  function stripHtml(s) { return (s || '').replace(/<[^>]*>/g, '').slice(0, 120); }
+
+  /* 日期分组 + 时间格式化（按日期就近程度切换显示） */
+  function fmtTimeOnly(s) {
+    const t = new Date(s); if (isNaN(t)) return '';
+    return t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  }
+  function fmtDateShort(s) {
+    const t = new Date(s); if (isNaN(t)) return '';
+    const d = new Date();
+    if (t.getFullYear() !== d.getFullYear()) return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
+    return (t.getMonth() + 1) + '-' + (t.getDate() < 10 ? '0' : '') + t.getDate();
+  }
+  function dayKey(s) {
+    const t = new Date(s); if (isNaN(t)) return 'z';
+    return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
+  }
+  function dayLabel(s) {
+    const t = new Date(s); if (isNaN(t)) return '更早';
+    const now = new Date();
+    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const day0 = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    const diff = Math.round((today0 - day0) / 86400000);
+    if (diff <= 0) return '今天';
+    if (diff === 1) return '昨天';
+    if (diff < 7) return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][t.getDay()];
+    if (t.getFullYear() === now.getFullYear()) return (t.getMonth() + 1) + '-' + (t.getDate() < 10 ? '0' : '') + t.getDate();
+    return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
+  }
+  function timeForMeta(s, label) {
+    if (label === '今天' || label === '昨天') return fmtTimeOnly(s);
+    if (/^周/.test(label)) return label + ' ' + fmtTimeOnly(s);
+    return fmtDateShort(s);
+  }
+  /* 收藏（localStorage 持久化） */
+  function getFavs() {
+    try { return new Set(JSON.parse(localStorage.getItem('jw_news_fav') || '[]')); }
+    catch (e) { return new Set(); }
+  }
+  function toggleFav(link) {
+    const s = getFavs();
+    s.has(link) ? s.delete(link) : s.add(link);
+    try { localStorage.setItem('jw_news_fav', JSON.stringify([...s])); } catch (e) {}
+  }
 
   /* ============ AI 动态 ============ */
   const tabsEl = $('#newsTabs'), listEl = $('#newsList');
@@ -188,17 +231,63 @@
       listEl.innerHTML = `<div class="empty">暂无内容</div>`;
       return;
     }
-    const rows = items.map(it => `
-      <a class="nrow" href="${esc(it.link)}" target="_blank" rel="noopener">
-        <div class="n-title">${esc(it.title)}</div>
-        <div class="n-meta"><span>${esc(it.src)}</span>${it.date ? '<span>' + esc(it.date) + '</span>' : ''}${it.desc ? '<span class="n-desc">' + esc(it.desc) + '</span>' : ''}</div>
-      </a>`).join('');
+    const favs = getFavs();
+    // 按日期分组（items 已按时间倒序，分组顺序天然正确）
+    const gmap = new Map();
+    const groups = [];
+    items.forEach(it => {
+      const k = dayKey(it.date);
+      if (!gmap.has(k)) {
+        const g = { label: dayLabel(it.date), items: [] };
+        gmap.set(k, g); groups.push(g);
+      }
+      gmap.get(k).items.push(it);
+    });
+    const newsHtml = groups.map(g => {
+      const rows = g.items.map(it => {
+        const on = favs.has(it.link);
+        return `
+        <a class="nrow" href="${esc(it.link)}" target="_blank" rel="noopener">
+          <div class="n-top">
+            <div class="n-title">${esc(it.title)}</div>
+            <span class="n-star${on ? ' on' : ''}" role="button" tabindex="0" data-link="${esc(it.link)}" aria-label="收藏" aria-pressed="${on ? 'true' : 'false'}">${on ? '★' : '☆'}</span>
+          </div>
+          <div class="n-meta">
+            <span class="n-src"><i></i>${esc(it.src)}</span>
+            <span class="n-time">${esc(timeForMeta(it.date, g.label))}</span>
+          </div>
+          ${it.desc ? `<div class="n-desc">${esc(stripHtml(it.desc))}</div>` : ''}
+        </a>`;
+      }).join('');
+      return `<div class="day-h"><span class="day-label">${esc(g.label)}</span><span class="day-count">${g.items.length}</span><span class="day-line"></span></div>${rows}`;
+    }).join('');
+
     const fails = failedSources.map(f => `
       <a class="nrow fail" href="${esc(f.url)}" target="_blank" rel="noopener">
-        <div class="n-title">${esc(f.label)} 抓取失败</div>
-        <div class="n-meta"><span>${esc(f.site)}</span><span>点击直接访问源站 →</span></div>
+        <div class="n-top">
+          <div class="n-title">${esc(f.label)} 抓取失败</div>
+        </div>
+        <div class="n-meta">
+          <span class="n-src"><i></i>${esc(f.site)}</span>
+          <span class="n-time">点击访问源站 →</span>
+        </div>
       </a>`).join('');
-    listEl.innerHTML = rows + fails;
+
+    listEl.innerHTML = newsHtml + fails;
+    // 收藏星标点击（避免跳转）
+    listEl.querySelectorAll('.n-star').forEach(el => {
+      const onToggle = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const link = el.dataset.link;
+        if (!link) return;
+        toggleFav(link);
+        const on = el.classList.toggle('on');
+        el.textContent = on ? '★' : '☆';
+        el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      };
+      el.addEventListener('click', onToggle);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onToggle(e); });
+    });
   }
 
   async function loadNews(tab) {
