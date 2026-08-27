@@ -244,38 +244,38 @@
       gmap.get(k).items.push(it);
     });
 
-    // 单张资讯卡
-    function card(it, g, on) {
+    // 单条资讯行
+    function row(it, g, on) {
       const isFail = (g === null);
       return `
-      <a class="ncard${isFail ? ' fail' : ''}" href="${esc(it.link)}" target="_blank" rel="noopener">
-        <div class="nc-top">
-          <div class="nc-title">${esc(it.title)}</div>
-          ${isFail ? '' : `<span class="nc-star${on ? ' on' : ''}" role="button" tabindex="0" data-link="${esc(it.link)}" aria-label="收藏" aria-pressed="${on ? 'true' : 'false'}">${on ? '★' : '☆'}</span>`}
+      <a class="nrow${isFail ? ' fail' : ''}" href="${esc(it.link)}" target="_blank" rel="noopener">
+        <div class="n-top">
+          <div class="n-title">${esc(it.title)}</div>
+          ${isFail ? '' : `<span class="n-star${on ? ' on' : ''}" role="button" tabindex="0" data-link="${esc(it.link)}" aria-label="收藏" aria-pressed="${on ? 'true' : 'false'}">${on ? '★' : '☆'}</span>`}
         </div>
-        <div class="nc-meta">
-          <span class="nc-src"><i></i>${esc(it.src)}</span>
-          <span>${esc(isFail ? '点击访问' : timeForMeta(it.date, g.label))}</span>
+        <div class="n-meta">
+          <span class="n-src"><i></i>${esc(it.src)}</span>
+          <span class="n-time">${esc(isFail ? '点击访问' : timeForMeta(it.date, g.label))}</span>
         </div>
-        ${it.desc ? `<div class="nc-desc">${esc(stripHtml(it.desc))}</div>` : ''}
+        ${it.desc ? `<div class="n-desc">${esc(stripHtml(it.desc))}</div>` : ''}
       </a>`;
     }
 
     const newsHtml = groups.map(g => {
-      // 每个日期最多显示 10 条，横向滑杆浏览
+      // 每个日期最多 10 条，默认露出约 3 条，竖向滚动看更多
       const list = g.items.slice(0, 10);
-      const rows = list.map(it => card(it, g, favs.has(it.link))).join('');
-      const more = g.items.length > 3 ? `<span class="day-more">共 ${g.items.length} 条 · 滑动查看</span>` : '';
-      return `<div class="day-h"><span class="day-label">${esc(g.label)}</span><span class="day-count">${g.items.length}</span><span class="day-line"></span>${more}</div><div class="day-track">${rows}</div>`;
+      const rows = list.map(it => row(it, g, favs.has(it.link))).join('');
+      const more = g.items.length > 3 ? `<span class="day-more">共 ${g.items.length} 条 · 下滑查看</span>` : '';
+      return `<div class="day-h"><span class="day-label">${esc(g.label)}</span><span class="day-count">${g.items.length}</span><span class="day-line"></span>${more}</div><div class="day-scroll">${rows}</div>`;
     }).join('');
 
     const failHtml = failedSources.length
-      ? `<div class="day-h"><span class="day-label">抓取失败</span><span class="day-count">${failedSources.length}</span><span class="day-line"></span></div><div class="day-track">${failedSources.map(f => card({ title: f.label + ' 抓取失败', link: f.url, src: f.site, date: '', desc: '' }, null, false)).join('')}</div>`
+      ? `<div class="day-h"><span class="day-label">抓取失败</span><span class="day-count">${failedSources.length}</span><span class="day-line"></span></div><div class="day-scroll">${failedSources.map(f => row({ title: f.label + ' 抓取失败', link: f.url, src: f.site, date: '', desc: '' }, null, false)).join('')}</div>`
       : '';
 
     listEl.innerHTML = newsHtml + failHtml;
     // 收藏星标点击（避免跳转）
-    listEl.querySelectorAll('.nc-star').forEach(el => {
+    listEl.querySelectorAll('.n-star').forEach(el => {
       const onToggle = (e) => {
         e.preventDefault(); e.stopPropagation();
         const link = el.dataset.link;

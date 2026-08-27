@@ -149,27 +149,29 @@
   .chip:hover{color:var(--text)}
   .chip.active{color:#fff;background:var(--accent);border-color:var(--accent)}
   .feed{flex:1;overflow-y:auto;min-height:0}
-  .day-h{display:flex;align-items:center;gap:9px;padding:14px 16px 10px}
+  .day-h{display:flex;align-items:center;gap:9px;padding:14px 16px 8px}
   .day-h .day-label{font-size:13px;font-weight:700;color:var(--text)}
   .day-h .day-count{font-size:11px;font-weight:600;color:var(--text-dim);background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:999px;padding:2px 9px;font-family:var(--mono)}
   .day-h .day-line{flex:1;height:1px;background:var(--border-soft);min-width:0}
   .day-h .day-more{font-size:11px;color:var(--text-faint);font-family:var(--mono);white-space:nowrap}
-  .day-track{display:flex;gap:12px;overflow-x:auto;padding:2px 16px 16px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-  .day-track::-webkit-scrollbar{height:6px}
-  .day-track::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-  .day-track::-webkit-scrollbar-track{background:transparent}
-  .ncard{flex:0 0 182px;scroll-snap-align:start;background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:8px;color:inherit;transition:border-color .15s}
-  .ncard:hover{border-color:var(--accent)}
-  .ncard.fail{opacity:.6}
-  .nc-top{display:flex;align-items:flex-start;gap:8px}
-  .nc-title{font-size:13px;font-weight:700;line-height:1.45;color:var(--text);flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}
-  .nc-star{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:all .15s;user-select:none}
-  .nc-star:hover{color:var(--accent);border-color:var(--accent)}
-  .nc-star.on{color:var(--amber);border-color:rgba(255,180,84,.45);background:rgba(255,180,84,.08)}
-  .nc-meta{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text-faint)}
-  .nc-meta .nc-src{display:inline-flex;align-items:center;gap:5px;color:var(--accent);font-weight:600}
-  .nc-meta .nc-src i{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block}
-  .nc-desc{font-size:12px;color:var(--text-dim);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+  /* 每个日期组：竖向滚动，默认露出约 3 条，往下滑看更多 */
+  .day-scroll{overflow-y:auto;max-height:324px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+  .day-scroll::-webkit-scrollbar{width:6px}
+  .day-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .day-scroll::-webkit-scrollbar-track{background:transparent}
+  .nrow{display:block;padding:12px 16px;border-bottom:1px solid var(--border-soft);transition:background .12s;color:inherit}
+  .nrow:hover{background:var(--bg-soft)}
+  .nrow.fail{opacity:.6}
+  .n-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:5px}
+  .n-title{font-size:14px;font-weight:700;line-height:1.45;color:var(--text);flex:1;word-break:break-word}
+  .n-star{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:14px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:all .15s;user-select:none}
+  .n-star:hover{color:var(--accent);border-color:var(--accent)}
+  .n-star.on{color:var(--amber);border-color:rgba(255,180,84,.45);background:rgba(255,180,84,.08)}
+  .n-meta{display:flex;align-items:center;gap:12px;margin-bottom:5px;font-family:var(--mono);font-size:11.5px;color:var(--text-faint)}
+  .n-meta .n-src{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-weight:600}
+  .n-meta .n-src i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+  .n-meta .n-time{color:var(--text-faint)}
+  .n-desc{font-size:12.5px;color:var(--text-dim);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .empty{color:var(--text-faint);font-size:12.5px;padding:26px 16px;text-align:center}
   .empty.small{padding:12px;font-size:11.5px}
 
@@ -331,9 +333,9 @@
   </div>
 </footer>
 
-<script src="js/config.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
-<script type="module" src="js/app3d.js?v=10"></script>
+<script src="js/config.js?v=11"></script>
+<script src="js/app.js?v=11"></script>
+<script type="module" src="js/app3d.js?v=11"></script>
 <script>
   // 顶部统计数字（config 加载后填充）
   window.addEventListener('DOMContentLoaded', function () {
