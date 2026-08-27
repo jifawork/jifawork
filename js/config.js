@@ -65,7 +65,7 @@ window.JW = {
     { name: 'MKBHD',            handle: '@mkbhd',           id: 'UCBJycsmduvYEL83R_U4JriQ' },
     { name: 'Linus Tech Tips',  handle: '@LinusTechTips',   id: 'UCXuqSBlHAE6Xw-yeJA0Tunw' },
     { name: '影视飓风',         handle: '@mediastorm6801',  id: 'UC2cRwTuSWxxEtrRnT4lrlQA' },
-    { name: 'Fireship',         handle: '@Fireship',        id: 'UCsBjURrPoezykLs9EqxnO1Q' },
+    { name: 'Fireship',         handle: '@Fireship',        id: 'UCsBjURrPoezykLs9EqgamOA' },
   ],
 
   /* ---- RSS 代理（同源 Pages Function：/api/rss，见 functions/api/rss.js）----
