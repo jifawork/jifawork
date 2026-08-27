@@ -9,9 +9,23 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const JW = window.JW || {};
 const ST = {
   on:   '#35d0ba',
-  off:  '#46536b',
   idle: '#ffb454',
 };
+
+/* ---------- 主题色板（深 / 浅） ---------- */
+let THEME = (document.documentElement.getAttribute('data-theme') === 'light') ? 'light' : 'dark';
+const PAL = {
+  dark:  { wall: 0x2a3550, f1: 0x232c44, f2: 0x202840, hemiGround: 0x101524, amb: 0x33415e, ambI: 0.5, dirI: 0.9, roomLab: '#7d8db0', devLab: '#c7d2ea', off: '#46536b' },
+  light: { wall: 0xb6c2d8, f1: 0xd3dbe9, f2: 0xc6d1e2, hemiGround: 0xe9edf4, amb: 0xffffff, ambI: 0.45, dirI: 1.05, roomLab: '#5b6b8c', devLab: '#333f57', off: '#9aa7bd' },
+};
+function statusColor(s) {
+  if (s === 'on') return ST.on;
+  if (s === 'idle') return ST.idle;
+  return PAL[THEME].off;
+}
+const labels = [];        // 所有文字精灵（切主题时重绘）
+const themeMats = [];     // { mat, dk, lt } 深浅两套颜色的材质
+
 const roomByKey = {};
 (JW.rooms || []).forEach(r => { roomByKey[r.key] = r; });
 
@@ -23,24 +37,40 @@ let renderer, scene, camera, controls, raycaster, pointer, hovered = null;
 let selectedId = null;
 
 /* ---------- 文字精灵 ---------- */
-function makeLabel(text, { size = 1.4, color = '#9fb0cc', weight = 600, font = '14px' } = {}) {
-  const c = document.createElement('canvas');
+function labelColor(kind) { return kind === 'room' ? PAL[THEME].roomLab : PAL[THEME].devLab; }
+
+function drawLabelCanvas(c, text, color) {
   const ctx = c.getContext('2d');
-  ctx.font = `600 28px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif`;
-  const w = ctx.measureText(text).width + 16;
-  c.width = Math.max(64, w);
-  c.height = 44;
   ctx.clearRect(0, 0, c.width, c.height);
-  ctx.font = `600 28px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif`;
+  ctx.font = '600 28px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, c.width / 2, c.height / 2 + 2);
+}
+
+function refreshLabels() {
+  labels.forEach(sp => {
+    drawLabelCanvas(sp.material.map.image, sp.userData.text, labelColor(sp.userData.kind));
+    sp.material.map.needsUpdate = true;
+  });
+}
+
+function makeLabel(text, { size = 1.4, kind = 'dev' } = {}) {
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  ctx.font = '600 28px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  const w = ctx.measureText(text).width + 16;
+  c.width = Math.max(64, w);
+  c.height = 44;
+  drawLabelCanvas(c, text, labelColor(kind));
   const tex = new THREE.CanvasTexture(c);
   tex.minFilter = THREE.LinearFilter;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
   const aspect = c.width / c.height;
   sp.scale.set(size * aspect, size, 1);
+  sp.userData = { text, kind };
+  labels.push(sp);
   return sp;
 }
 
@@ -49,15 +79,19 @@ function buildRooms() {
   const group = new THREE.Group();
   (JW.rooms || []).forEach(r => {
     const x = r.x, z = r.z, w = r.w, h = r.h;
-    // 楼板
-    const floor = new THREE.Mesh(
-      new THREE.BoxGeometry(w, 0.14, h),
-      new THREE.MeshStandardMaterial({ color: r.color, roughness: 0.9, metalness: 0.1 })
-    );
+    // 楼板（浅色主题下提亮）
+    const floorMat = new THREE.MeshStandardMaterial({ color: r.color, roughness: 0.9, metalness: 0.1 });
+    themeMats.push({
+      mat: floorMat,
+      dk: new THREE.Color(r.color),
+      lt: new THREE.Color(r.color).lerp(new THREE.Color(0xffffff), 0.55),
+    });
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, h), floorMat);
     floor.position.set(x, -0.07, z);
     group.add(floor);
     // 地脚线 / 墙体
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x2a3550, transparent: true, opacity: 0.5, roughness: 0.8 });
+    const wallMat = new THREE.MeshStandardMaterial({ color: PAL[THEME].wall, transparent: true, opacity: 0.5, roughness: 0.8 });
+    themeMats.push({ mat: wallMat, dk: new THREE.Color(PAL.dark.wall), lt: new THREE.Color(PAL.light.wall) });
     const t = 0.08, th = 0.55;
     const mk = (px, pz, sx, sz) => {
       const m = new THREE.Mesh(new THREE.BoxGeometry(sx, th, sz), wallMat);
@@ -67,19 +101,18 @@ function buildRooms() {
     mk(x - w / 2, z, t, h); mk(x + w / 2, z, t, h);
     mk(x, z - h / 2, w, t); mk(x, z + h / 2, w, t);
     // 房间名
-    const lab = makeLabel(r.name, { color: '#7d8db0', size: 0.7 });
+    const lab = makeLabel(r.name, { kind: 'room', size: 0.7 });
     lab.position.set(x, 0.05, z + h / 2 + 0.55);
     group.add(lab);
     // 简单家具
     const furn = [
-      { w: 1.5, h: 0.4, d: 0.9, px: x - 0.6, pz: z - 0.2, c: 0x232c44 },  // 沙发/床
-      { w: 0.9, h: 0.8, d: 0.5, px: x + 0.8, pz: z + 0.2, c: 0x202840 },  // 柜子
+      { w: 1.5, h: 0.4, d: 0.9, px: x - 0.6, pz: z - 0.2, pal: 'f1' },  // 沙发/床
+      { w: 0.9, h: 0.8, d: 0.5, px: x + 0.8, pz: z + 0.2, pal: 'f2' },  // 柜子
     ];
     furn.forEach(f => {
-      const m = new THREE.Mesh(
-        new THREE.BoxGeometry(f.w, f.h, f.d),
-        new THREE.MeshStandardMaterial({ color: f.c, roughness: 0.85 })
-      );
+      const fm = new THREE.MeshStandardMaterial({ color: PAL[THEME][f.pal], roughness: 0.85 });
+      themeMats.push({ mat: fm, dk: new THREE.Color(PAL.dark[f.pal]), lt: new THREE.Color(PAL.light[f.pal]) });
+      const m = new THREE.Mesh(new THREE.BoxGeometry(f.w, f.h, f.d), fm);
       m.position.set(f.px, f.h / 2, f.pz);
       group.add(m);
     });
@@ -109,7 +142,7 @@ function buildMarker(dev) {
 
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.24, 0.32, 40),
-    new THREE.MeshBasicMaterial({ color: ST[dev.status] || '#93a0b8', side: THREE.DoubleSide, transparent: true, opacity: 0.95 })
+    new THREE.MeshBasicMaterial({ color: statusColor(dev.status), side: THREE.DoubleSide, transparent: true, opacity: 0.95 })
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.03;
@@ -117,17 +150,17 @@ function buildMarker(dev) {
 
   const pillar = new THREE.Mesh(
     new THREE.CylinderGeometry(0.045, 0.065, 0.5, 16),
-    new THREE.MeshBasicMaterial({ color: ST[dev.status] || '#93a0b8' })
+    new THREE.MeshBasicMaterial({ color: statusColor(dev.status) })
   );
   pillar.position.y = 0.27;
   group.add(pillar);
 
-  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(ST[dev.status] || '#93a0b8'), transparent: true, depthWrite: false }));
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(statusColor(dev.status)), transparent: true, depthWrite: false }));
   glow.scale.set(1.3, 1.3, 1);
   glow.position.y = 0.32;
   group.add(glow);
 
-  const lab = makeLabel(dev.name, { size: 0.5, color: '#c7d2ea' });
+  const lab = makeLabel(dev.name, { size: 0.5 });
   lab.position.y = 0.95;
   group.add(lab);
 
@@ -138,7 +171,7 @@ function buildMarker(dev) {
 function colorMarker(dev, active) {
   const m = markers.get(dev.id);
   if (!m) return;
-  const col = active ? '#ffffff' : (ST[dev.status] || '#93a0b8');
+  const col = active ? '#ffffff' : statusColor(dev.status);
   m.ring.material.color.set(col);
   m.pillar.material.color.set(col);
   m.ring.material.opacity = active ? 1 : 0.95;
@@ -191,7 +224,7 @@ function sync() {
   JW.devices.forEach(dev => {
     const m = markers.get(dev.id);
     if (m) {
-      const col = ST[dev.status] || '#93a0b8';
+      const col = statusColor(dev.status);
       m.ring.material.color.set(col);
       m.pillar.material.color.set(col);
       m.glow.material.map = glowTexture(col);
@@ -201,7 +234,21 @@ function sync() {
   if (selectedId) select(selectedId);
 }
 
-window.JW3D = { select, sync };
+/* ---------- 主题切换 ---------- */
+let hemiLight = null, ambLight = null, dirLight = null;
+function setTheme(t) {
+  THEME = (t === 'light') ? 'light' : 'dark';
+  if (!scene) return;
+  const p = PAL[THEME];
+  themeMats.forEach(m => m.mat.color.copy(THEME === 'light' ? m.lt : m.dk));
+  if (hemiLight) hemiLight.groundColor.set(p.hemiGround);
+  if (ambLight) ambLight.color.set(p.amb);
+  if (dirLight) dirLight.intensity = p.dirI;
+  refreshLabels();
+  sync();
+}
+
+window.JW3D = { select, sync, setTheme };
 
 /* ---------- 初始化 ---------- */
 function init() {
@@ -216,11 +263,13 @@ function init() {
   camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 200);
   camera.position.set(5.2, 9.5, 8.8);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x101524, 0.85));
-  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-  dir.position.set(6, 12, 4);
-  scene.add(dir);
-  scene.add(new THREE.AmbientLight(0x33415e, 0.5));
+  hemiLight = new THREE.HemisphereLight(0xffffff, PAL[THEME].hemiGround, 0.85);
+  scene.add(hemiLight);
+  dirLight = new THREE.DirectionalLight(0xffffff, PAL[THEME].dirI);
+  dirLight.position.set(6, 12, 4);
+  scene.add(dirLight);
+  ambLight = new THREE.AmbientLight(PAL[THEME].amb, PAL[THEME].ambI);
+  scene.add(ambLight);
 
   scene.add(buildRooms());
 

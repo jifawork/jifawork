@@ -11,25 +11,50 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
+<script>
+  // 提前应用主题，避免闪屏（默认跟随系统）
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('jw-theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
   :root{
     --bg:#0b0e14; --bg-soft:#0f131c; --panel:#131926; --panel-2:#182034;
     --border:#222b40; --border-soft:#1a2234;
     --text:#e8ecf4; --text-dim:#94a1ba; --text-faint:#5d6b86;
     --accent:#5b8cff; --teal:#35d0ba; --amber:#ffb454; --red:#ff5c7a;
+    --header-bg:rgba(11,14,20,.85);
+    --overlay-bg:rgba(11,14,20,.72);
+    --scene-bg:radial-gradient(700px 420px at 50% 20%,#101828 0%,#0b0e14 70%);
+    --dot-off:#46536b;
     --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,monospace;
     --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
     --r:10px;
   }
+  html[data-theme="light"]{
+    --bg:#f4f6fa; --bg-soft:#eef1f7; --panel:#ffffff; --panel-2:#f2f5fa;
+    --border:#d9e0ec; --border-soft:#e6ebf4;
+    --text:#1c2434; --text-dim:#4d5a72; --text-faint:#8a97ad;
+    --accent:#3e6fe5; --teal:#0e9e8c; --amber:#c77e17; --red:#dd3d63;
+    --header-bg:rgba(244,246,250,.86);
+    --overlay-bg:rgba(255,255,255,.78);
+    --scene-bg:radial-gradient(700px 420px at 50% 20%,#ffffff 0%,#e9edf5 70%);
+    --dot-off:#9aa7bd;
+  }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
   ::selection{background:rgba(91,140,255,.35)}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
 
   /* ===== topbar ===== */
-  header{position:sticky;top:0;z-index:60;background:rgba(11,14,20,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-soft)}
+  header{position:sticky;top:0;z-index:60;background:var(--header-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-soft);transition:background .25s}
   .topbar{display:flex;align-items:center;justify-content:space-between;height:56px}
   .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px;font-size:15px}
   .logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#7a5bff);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;box-shadow:0 4px 14px rgba(91,140,255,.35)}
@@ -47,6 +72,9 @@
   .token-badge.danger{color:var(--red);border-color:rgba(255,92,122,.45);background:rgba(255,92,122,.1);animation:tokenPulse 2s infinite}
   .token-badge.danger b{color:var(--red)}
   @keyframes tokenPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,92,122,.25)}50%{box-shadow:0 0 0 5px rgba(255,92,122,0)}}
+  .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg-soft);color:var(--text);font-size:15px;line-height:1;cursor:pointer;transition:border-color .15s,transform .2s,background .25s;flex-shrink:0}
+  .theme-btn:hover{border-color:var(--accent);transform:rotate(18deg) scale(1.06)}
+  .theme-btn:active{transform:scale(.94)}
 
   /* ===== hero ===== */
   .hero{padding:52px 0 30px;position:relative;overflow:hidden}
@@ -71,11 +99,11 @@
   /* ===== 智能家居 3D ===== */
   .home-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:stretch}
   .panel{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r);overflow:hidden}
-  .scene-box{position:relative;height:500px;background:radial-gradient(700px 420px at 50% 20%,#101828 0%,#0b0e14 70%)}
+  .scene-box{position:relative;height:500px;background:var(--scene-bg)}
   #scene3d{position:absolute;inset:0;cursor:grab}
   #scene3d canvas{display:block;border-radius:var(--r)}
-  .scene-note{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--text-faint);background:rgba(11,14,20,.72);border:1px solid var(--border-soft);border-radius:7px;padding:5px 10px;backdrop-filter:blur(6px)}
-  .legend{position:absolute;right:14px;top:12px;display:flex;flex-direction:column;gap:5px;background:rgba(11,14,20,.72);border:1px solid var(--border-soft);border-radius:7px;padding:8px 11px;backdrop-filter:blur(6px)}
+  .scene-note{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--text-faint);background:var(--overlay-bg);border:1px solid var(--border-soft);border-radius:7px;padding:5px 10px;backdrop-filter:blur(6px)}
+  .legend{position:absolute;right:14px;top:12px;display:flex;flex-direction:column;gap:5px;background:var(--overlay-bg);border:1px solid var(--border-soft);border-radius:7px;padding:8px 11px;backdrop-filter:blur(6px)}
   .legend span{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);font-family:var(--mono)}
   .legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
 
@@ -181,6 +209,7 @@
         <a href="#news">AI 动态</a>
         <a href="#yt">关注博主</a>
       </nav>
+      <button class="theme-btn" id="themeToggle" title="切换深色 / 浅色主题" aria-label="切换主题">☀️</button>
       <span class="token-badge" id="tokenBadge" title="GitHub PAT（自动部署用）到期时间，逾期 push 会失败。更换 Token 后修改 js/config.js 里的 tokenExpiry 即可。">
         <span class="tb-icon">📅</span>Token <b id="tbDate">-</b> · <span id="tbDays">-</span>
       </span>
@@ -222,7 +251,7 @@
         <div class="legend">
           <span><i style="background:#35d0ba"></i>运行中</span>
           <span><i style="background:#ffb454"></i>待机</span>
-          <span><i style="background:#46536b"></i>已关闭</span>
+          <span><i style="background:var(--dot-off)"></i>已关闭</span>
         </div>
         <div class="scene-note" id="sceneNote">正在加载 3D 场景…</div>
       </div>
@@ -293,6 +322,26 @@
 <script>
   // 顶部统计数字（config 加载后填充）
   window.addEventListener('DOMContentLoaded', function () {
+    // ===== 主题切换 =====
+    var tbtn = document.getElementById('themeToggle');
+    function applyThemeIcon() {
+      var t = document.documentElement.getAttribute('data-theme');
+      if (tbtn) tbtn.textContent = (t === 'light') ? '🌙' : '☀️';
+    }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem('jw-theme', t); } catch (e) {}
+      applyThemeIcon();
+      if (window.JW3D && window.JW3D.setTheme) window.JW3D.setTheme(t);
+    }
+    if (tbtn) {
+      applyThemeIcon();
+      tbtn.addEventListener('click', function () {
+        var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+        setTheme(cur === 'dark' ? 'light' : 'dark');
+      });
+    }
+
     if (!window.JW) return;
     document.getElementById('stDev').textContent = (window.JW.devices || []).length;
     document.getElementById('stNews').textContent = (window.JW.news || []).length;
