@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JifaWork · 个人作战台</title>
+<meta name="description" content="JifaWork 个人作战台 —— 智能家居 3D 控制、权威 AI 动态、关注博主视频，一页装下你关心的一切。">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root{
+    --bg:#0b0e14; --bg-soft:#0f131c; --panel:#131926; --panel-2:#182034;
+    --border:#222b40; --border-soft:#1a2234;
+    --text:#e8ecf4; --text-dim:#94a1ba; --text-faint:#5d6b86;
+    --accent:#5b8cff; --teal:#35d0ba; --amber:#ffb454; --red:#ff5c7a;
+    --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+    --r:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(91,140,255,.35)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+
+  /* ===== topbar ===== */
+  header{position:sticky;top:0;z-index:60;background:rgba(11,14,20,.85);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-soft)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px;font-size:15px}
+  .logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#7a5bff);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;box-shadow:0 4px 14px rgba(91,140,255,.35)}
+  nav.desktop{display:flex;gap:26px}
+  nav a{color:var(--text-dim);font-size:13.5px;font-weight:500;padding:4px 2px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+  nav a:hover{color:var(--text);border-color:var(--accent)}
+  .burger{display:none;background:none;border:1px solid var(--border);border-radius:7px;color:var(--text);padding:5px 10px;cursor:pointer}
+
+  /* ===== hero ===== */
+  .hero{padding:52px 0 30px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(560px 260px at 15% -20%,rgba(91,140,255,.13),transparent 60%),radial-gradient(480px 240px at 90% 0%,rgba(53,208,186,.09),transparent 60%)}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;letter-spacing:2px;color:var(--teal);border:1px solid rgba(53,208,186,.25);background:rgba(53,208,186,.07);padding:4px 11px;border-radius:999px;margin-bottom:16px}
+  .eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{font-size:32px;line-height:1.25;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+  h1 .grad{background:linear-gradient(90deg,var(--accent),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-sub{color:var(--text-dim);font-size:14.5px;max-width:640px;margin-bottom:18px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .stat{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim);border:1px solid var(--border);border-radius:7px;padding:5px 12px;background:var(--bg-soft)}
+  .stat b{color:var(--text);font-family:var(--mono);font-weight:600}
+
+  /* ===== section ===== */
+  section{padding:40px 0}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+  .sec-kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:2px;color:var(--accent);margin-bottom:4px}
+  .sec-title{font-size:21px;font-weight:800;letter-spacing:-.2px}
+  .sec-sub{font-size:12.5px;color:var(--text-faint);margin-top:2px}
+
+  /* ===== 智能家居 3D ===== */
+  .home-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:stretch}
+  .panel{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r);overflow:hidden}
+  .scene-box{position:relative;height:500px;background:radial-gradient(700px 420px at 50% 20%,#101828 0%,#0b0e14 70%)}
+  #scene3d{position:absolute;inset:0;cursor:grab}
+  #scene3d canvas{display:block;border-radius:var(--r)}
+  .scene-note{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--text-faint);background:rgba(11,14,20,.72);border:1px solid var(--border-soft);border-radius:7px;padding:5px 10px;backdrop-filter:blur(6px)}
+  .legend{position:absolute;right:14px;top:12px;display:flex;flex-direction:column;gap:5px;background:rgba(11,14,20,.72);border:1px solid var(--border-soft);border-radius:7px;padding:8px 11px;backdrop-filter:blur(6px)}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-dim);font-family:var(--mono)}
+  .legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+  /* 设备面板 */
+  .side{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r)}
+  .side-ha{padding:13px 14px;border-bottom:1px solid var(--border-soft);background:var(--bg-soft)}
+  .side-ha .ha-row{display:flex;gap:7px}
+  .side-ha input{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11.5px;padding:7px 9px;outline:none}
+  .side-ha input:focus{border-color:var(--accent)}
+  .ha-btn{background:var(--accent);border:none;color:#fff;font-size:12px;font-weight:600;border-radius:7px;padding:0 14px;cursor:pointer;white-space:nowrap}
+  .ha-btn:disabled{opacity:.5}
+  .ha-status{display:block;margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+  .ha-status.ok{color:var(--teal)}
+  .ha-status.err{color:var(--red)}
+  .side-ha .ha-tip{font-size:10.5px;color:var(--text-faint);margin-top:6px;line-height:1.5}
+  #devList{flex:1;overflow-y:auto;max-height:300px}
+  .drow{display:grid;grid-template-columns:auto 1fr auto auto;gap:9px;align-items:center;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--border-soft);padding:9px 14px;cursor:pointer;color:var(--text-dim);font-family:var(--sans);font-size:12.5px;transition:background .12s}
+  .drow:hover{background:var(--bg-soft)}
+  .drow.active{background:var(--bg-soft);color:var(--text);box-shadow:inset 3px 0 0 var(--accent)}
+  .d-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .d-name{font-weight:600;color:inherit}
+  .d-room{font-size:11px;color:var(--text-faint)}
+  .d-val{font-family:var(--mono);font-size:11px;color:var(--text-faint);white-space:nowrap}
+  #devDetail{padding:14px;border-top:1px solid var(--border-soft);background:var(--bg-soft)}
+  .dd-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .dd-icon{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-size:17px;font-weight:800}
+  .dd-name{font-size:14.5px;font-weight:700}
+  .dd-sub{font-size:11.5px;color:var(--text-faint);font-family:var(--mono)}
+  .dd-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;margin-left:auto}
+  .dd-val{font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:12px}
+  .dd-meta{display:flex;flex-direction:column;gap:6px}
+  .dd-meta div{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-faint);font-family:var(--mono)}
+  .dd-meta code{color:var(--text-dim)}
+
+  /* ===== 资讯双栏 ===== */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .col{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--r);display:flex;flex-direction:column;min-height:420px}
+  .col-head{padding:14px 16px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between}
+  .col-head h3{font-size:15px;font-weight:700}
+  .col-head .hint{font-size:11px;color:var(--text-faint);font-family:var(--mono)}
+  .filters{display:flex;gap:7px;padding:11px 16px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+  .chip{font-size:12px;color:var(--text-dim);cursor:pointer;border:1px solid var(--border);background:var(--bg-soft);border-radius:7px;padding:4px 12px;transition:all .12s}
+  .chip:hover{color:var(--text)}
+  .chip.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .feed{flex:1;overflow-y:auto;max-height:520px}
+  .nrow{display:block;padding:11px 16px;border-bottom:1px solid var(--border-soft);transition:background .12s}
+  .nrow:hover{background:var(--bg-soft)}
+  .nrow.fail{opacity:.6}
+  .n-title{font-size:13px;font-weight:600;line-height:1.45;color:var(--text)}
+  .n-meta{display:flex;gap:12px;margin-top:4px;font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+  .n-meta .n-desc{color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{color:var(--text-faint);font-size:12.5px;padding:26px 16px;text-align:center}
+  .empty.small{padding:12px;font-size:11.5px}
+
+  /* YouTube */
+  #ytList{flex:1;overflow-y:auto;max-height:520px;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+  .ytcard{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:9px;padding:12px}
+  .yt-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .yt-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),#7a5bff);flex-shrink:0}
+  .yt-name{font-size:13px;font-weight:700}
+  .yt-handle{font-size:11px;color:var(--text-faint);font-family:var(--mono)}
+  .yt-handle:hover{color:var(--accent)}
+  .yt-vids{display:flex;flex-direction:column;gap:8px}
+  .vrow{display:flex;gap:9px;align-items:center;padding:6px;border-radius:7px;transition:background .12s}
+  .vrow:hover{background:var(--panel)}
+  .v-thumb{width:74px;height:42px;object-fit:cover;border-radius:6px;background:var(--panel-2);flex-shrink:0}
+  .v-info{min-width:0}
+  .v-title{font-size:11.5px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .v-date{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:2px}
+
+  /* ===== footer ===== */
+  footer{border-top:1px solid var(--border-soft);padding:26px 0 38px;margin-top:30px}
+  .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+  .foot .f-l{font-size:12.5px;color:var(--text-faint)}
+  .foot .f-r{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);display:flex;gap:16px}
+  .foot a:hover{color:var(--accent)}
+
+  /* ===== responsive ===== */
+  @media(max-width:1024px){
+    .home-grid{grid-template-columns:1fr}
+    .duo{grid-template-columns:1fr}
+    #ytList{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:680px){
+    nav.desktop{display:none}
+    .burger{display:block}
+    h1{font-size:26px}
+    .scene-box{height:360px}
+    #ytList{grid-template-columns:1fr}
+  }
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap topbar">
+    <a href="#" class="logo"><span class="logo-mark">J!</span>JifaWork<span style="color:var(--accent)">.</span></a>
+    <nav class="desktop">
+      <a href="#home">智能家居</a>
+      <a href="#news">AI 动态</a>
+      <a href="#yt">关注博主</a>
+    </nav>
+    <button class="burger" onclick="var m=document.getElementById('mnav');m.classList.toggle('hidden')">☰</button>
+  </div>
+  <nav id="mnav" class="hidden" style="display:none;flex-direction:column;padding:10px 22px;border-bottom:1px solid var(--border-soft);background:var(--bg-soft)">
+    <a href="#home" style="padding:9px 0;border-bottom:1px solid var(--border-soft);color:var(--text-dim)" onclick="document.getElementById('mnav').classList.add('hidden')">智能家居</a>
+    <a href="#news" style="padding:9px 0;border-bottom:1px solid var(--border-soft);color:var(--text-dim)" onclick="document.getElementById('mnav').classList.add('hidden')">AI 动态</a>
+    <a href="#yt" style="padding:9px 0;color:var(--text-dim)" onclick="document.getElementById('mnav').classList.add('hidden')">关注博主</a>
+  </nav>
+</header>
+
+<!-- ===== HERO ===== -->
+<div class="wrap hero">
+  <span class="eyebrow"><span class="pulse"></span>JIFA · PERSONAL DASHBOARD</span>
+  <h1>JifaWork <span class="grad">个人作战台</span></h1>
+  <p class="hero-sub">智能家居 × AI 资讯 × 关注博主 —— 一页装下你关心的一切。技法，让工作与生活发光。</p>
+  <div class="chips">
+    <span class="stat">智能设备 <b id="stDev">0</b></span>
+    <span class="stat">资讯源 <b id="stNews">0</b></span>
+    <span class="stat">关注博主 <b id="stYt">0</b></span>
+  </div>
+</div>
+
+<!-- ===== 智能家居 3D ===== -->
+<section id="home" style="padding-top:6px">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="sec-kicker">// SMART HOME</div>
+        <h2 class="sec-title">智能家居 3D 控制台</h2>
+        <div class="sec-sub">米家 / 卡萨帝 · 经 Home Assistant 接入 · 当前为 Demo 数据，连接 HA 后实时同步</div>
+      </div>
+    </div>
+    <div class="home-grid">
+      <div class="panel scene-box">
+        <div id="scene3d"></div>
+        <div class="legend">
+          <span><i style="background:#35d0ba"></i>运行中</span>
+          <span><i style="background:#ffb454"></i>待机</span>
+          <span><i style="background:#46536b"></i>已关闭</span>
+        </div>
+        <div class="scene-note" id="sceneNote">正在加载 3D 场景…</div>
+      </div>
+      <div class="side">
+        <div class="side-ha">
+          <div class="ha-row">
+            <input id="haUrl" placeholder="HA 地址 http://192.168.x.x:8123" autocomplete="off">
+            <button class="ha-btn" id="haBtn">连接</button>
+          </div>
+          <div class="ha-row" style="margin-top:7px">
+            <input id="haToken" type="password" placeholder="长期访问令牌" autocomplete="off">
+          </div>
+          <span class="ha-status" id="haStatus">Demo 模式 · 填入 HA 地址和令牌即可接入真实设备</span>
+          <div class="ha-tip">提示：HA 需开启 CORS 或走反向代理，否则浏览器会跨域拦截</div>
+        </div>
+        <div id="devList"></div>
+        <div id="devDetail"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 资讯双栏 ===== -->
+<section id="news">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="sec-kicker">// WATCH</div>
+        <h2 class="sec-title">今日关注</h2>
+        <div class="sec-sub">左侧权威 AI 动态 · 右侧关注的博主最新视频</div>
+      </div>
+    </div>
+    <div class="duo">
+      <div class="col">
+        <div class="col-head">
+          <h3>AI 动态</h3>
+          <span class="hint">RSS 实时抓取</span>
+        </div>
+        <div class="filters" id="newsTabs"></div>
+        <div class="feed" id="newsList"></div>
+      </div>
+      <div class="col" id="yt">
+        <div class="col-head">
+          <h3>关注的博主</h3>
+          <span class="hint">YouTube 频道 RSS</span>
+        </div>
+        <div id="ytList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span class="f-l">© 2026 JifaWork · 用 AI 重新发明你的工作方式</span>
+    <div class="f-r">
+      <a href="#home">智能家居</a>
+      <a href="#news">AI 动态</a>
+      <a href="#yt">博主</a>
+      <span>沪ICP备00000000号-1</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script type="module" src="js/app3d.js"></script>
+<script>
+  // 顶部统计数字（config 加载后填充）
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.JW) return;
+    document.getElementById('stDev').textContent = (window.JW.devices || []).length;
+    document.getElementById('stNews').textContent = (window.JW.news || []).length;
+    document.getElementById('stYt').textContent = (window.JW.youtubers || []).length;
+  });
+</script>
+</body>
+</html>
