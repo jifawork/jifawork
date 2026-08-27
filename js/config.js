@@ -53,9 +53,13 @@ window.JW = {
   news: [
     { tab: '国内', label: '机器之心',   url: 'https://www.jiqizhixin.com/rss', site: 'jiqizhixin.com' },
     { tab: '国内', label: '量子位',     url: 'https://www.qbitai.com/feed',    site: 'qbitai.com' },
+    { tab: '国内', label: '雷锋网',     url: 'https://www.leiphone.com/feed',  site: 'leiphone.com' },
     { tab: '海外', label: 'OpenAI',     url: 'https://openai.com/blog/rss.xml', site: 'openai.com' },
     { tab: '海外', label: 'DeepMind',   url: 'https://deepmind.google/blog/rss.xml', site: 'deepmind.google' },
     { tab: '海外', label: 'The Verge AI', url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml', site: 'theverge.com' },
+    { tab: '海外', label: 'MIT科技评论', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed', site: 'technologyreview.com' },
+    { tab: '海外', label: 'Hugging Face', url: 'https://huggingface.co/blog/feed.xml', site: 'huggingface.co' },
+    { tab: '海外', label: 'Google AI',  url: 'https://blog.google/technology/ai/rss/', site: 'blog.google' },
   ],
 
   /* ---- 关注的 YouTube 博主 ----

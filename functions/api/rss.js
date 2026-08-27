@@ -8,9 +8,13 @@
 const ALLOWED_HOSTS = new Set([
   'www.jiqizhixin.com',
   'www.qbitai.com',
+  'www.leiphone.com',
   'openai.com',
   'deepmind.google',
   'www.theverge.com',
+  'www.technologyreview.com',
+  'huggingface.co',
+  'blog.google',
   'www.youtube.com',
   'youtube.com',
 ]);
