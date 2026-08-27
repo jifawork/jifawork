@@ -176,7 +176,10 @@
   .empty.small{padding:12px;font-size:11.5px}
 
   /* YouTube */
-  #ytList{flex:1;overflow-y:auto;min-height:0;padding:14px;display:flex;flex-direction:column;gap:12px}
+  #ytList{flex:1;overflow-y:auto;min-height:0;max-height:960px;padding:14px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+  #ytList::-webkit-scrollbar{width:6px}
+  #ytList::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  #ytList::-webkit-scrollbar-track{background:transparent}
   .ytcard{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
   .yt-head{display:flex;align-items:center;gap:10px}
   .yt-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--accent),#7a5bff);flex-shrink:0}
@@ -333,9 +336,9 @@
   </div>
 </footer>
 
-<script src="js/config.js?v=11"></script>
-<script src="js/app.js?v=11"></script>
-<script type="module" src="js/app3d.js?v=11"></script>
+<script src="js/config.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
+<script type="module" src="js/app3d.js?v=12"></script>
 <script>
   // 顶部统计数字（config 加载后填充）
   window.addEventListener('DOMContentLoaded', function () {
