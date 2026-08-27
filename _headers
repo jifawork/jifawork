@@ -1,0 +1,9 @@
+# Cloudflare Pages 缓存策略：静态资源不缓存，保证更新即时生效
+/js/*
+  Cache-Control: no-cache, must-revalidate
+
+/*.js
+  Cache-Control: no-cache, must-revalidate
+
+/*.css
+  Cache-Control: no-cache, must-revalidate
